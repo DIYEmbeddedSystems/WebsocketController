@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Robot remote controller</title>
+
+    <meta name="description" content="Wall-E Remote project">
+    <meta name="author" content="etienne.hamelin@gmail.com">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="mobile-web-app-capable" content="yes">
+	<link rel='stylesheet' href='bootstrap.min.css'>
+	<!-- <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'> -->
+
+	<style>
+
+.range {
+    display: table;
+    position: relative;
+    height: 25px;
+    margin-top: 0px;
+	margin-bottom: 10px;
+    background-color: rgb(245, 245, 245);
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.range input[type="range"] {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    -ms-appearance: none !important;
+    -o-appearance: none !important;
+    appearance: none !important;
+
+    display: table-cell;
+    width: 100%;
+    background-color: transparent;
+    height: 25px;
+    cursor: pointer;
+}
+
+.range input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    -ms-appearance: none !important;
+    -o-appearance: none !important;
+    appearance: none !important;
+
+    width: 11px;
+    height: 25px;
+    color: rgb(255, 255, 255);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0px;
+    background-color: rgb(153, 153, 153);
+}
+
+.range input[type="range"]::-moz-slider-thumb {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    -ms-appearance: none !important;
+    -o-appearance: none !important;
+    appearance: none !important;
+    
+    width: 11px;
+    height: 25px;
+    color: rgb(255, 255, 255);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0px;
+    background-color: rgb(153, 153, 153);
+}
+
+.range output {
+    display: table-cell;
+    padding: 3px 5px 2px;
+    min-width: 40px;
+    color: rgb(255, 255, 255);
+    background-color: rgb(153, 153, 153);
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    -ms-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: -moz-none;
+    -o-user-select: none;
+    user-select: none;
+}
+.range input[type="range"] {
+    outline: none;
+}
+
+.range.range-primary input[type="range"]::-webkit-slider-thumb {
+    background-color: rgb(66, 139, 202);
+}
+.range.range-primary input[type="range"]::-moz-slider-thumb {
+    background-color: rgb(66, 139, 202);
+}
+.range.range-primary output {
+    background-color: rgb(66, 139, 202);
+}
+.range.range-primary input[type="range"] {
+    outline-color: rgb(66, 139, 202);
+}
+
+
+/* Override Bootstrap styles */
+.jumbotron {
+	padding: 5px;
+}
+
+.container-fluid {
+	padding: 10px;
+	background-color:lightyellow;
+}
+
+	</style>
+</head>
+
+<body>
+    <div class="container-fluid">
+	<div class="row">
+		<div class="col-md-8">
+			<div class="jumbotron" id="navCanvas">
+				<table>
+					<tbody>
+						<tr>
+							<td>
+								Navigation panel<br/>
+								<canvas id="canvasNavJoystick"></canvas> 
+							</td>
+							<td>
+								Head pan/tilt<br/>
+								<canvas id="canvasHeadJoystick"></canvas>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Left arm<br/>
+								<canvas id="canvasLeftArmJoystick"></canvas>
+							</td>
+							<td>
+								Right arm<br/>
+								<canvas id="canvasRightArmJoystick"></canvas>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>	
+		</div>
+		<div class="col-md-4">
+			<div class="jumbotron">
+				<p>Control panel</p>
+				<p>
+					<label for="formAddress">
+						Robot websocket URL
+					</label>
+					<input type="text" class="form-control" id="formAddress" value="ws://walle.local:81">
+					<a class="btn btn-primary btn-large" id="buttonConnect">Connect</a>
+				</p>
+				<p>Log</p>
+				<textarea id="log" class="form-control" height="200">...</textarea>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">
+			<div class="jumbotron">
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>up</td>
+							<td align="center"><label>Left shoulder</label></td>
+							<td align="right">down</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeShL" type="range" min="0" max="100" value="50" onchange="rangeOutShL.value=value">
+					<output id="rangeOutShL">50</output>
+				</div>
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>out</td>
+							<td align="center"><label>Left arm</label></td>
+							<td align="right">in</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeArmL" type="range" min="0" max="100" value="50" onchange="rangeOutArmL.value=value">
+					<output id="rangeOutArmL">50</output>
+				</div>
+
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>open</td>
+							<td align="center"><label>Left hand</label></td>
+							<td align="right">closed</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeHandL" type="range" min="0" max="100" value="50" onchange="rangeOutHandL.value=value">
+					<output id="rangeOutHandL">50</output>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="jumbotron">
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>left</td>
+							<td align="center">
+								<label>Head pan</label>
+							</td>
+						<td align="right">right</td>
+					</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeHeadPan" type="range" min="0" max="100" value="50" onchange="rangeOutHeadPan.value=value">
+					<output id="rangeOutHeadPan">50</output>
+				</div>
+				
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>up</td>
+							<td align="center">
+								<label>Head tilt</label>
+							</td>
+							<td align="right">down</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeHeadTilt" type="range" min="0" max="100" value="50" onchange="rangeOutHeadTilt.value=value">
+					<output id="rangeOutHeadTilt">50</output>
+				</div>				
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="jumbotron">
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>up</td>
+							<td align="center">
+								<label>Right shoulder</label>
+							</td>
+							<td align="right">down</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeShR" type="range" min="0" max="100" value="50" onchange="rangeOutShR.value=value">
+					<output id="rangeOutShR">50</output>
+				</div>
+
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>in</td>
+							<td align="center">
+								<label>Right arm</label>
+							</td>
+							<td align="right">out</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeArmR" type="range" min="0" max="100" value="50" onchange="rangeOutArmR.value=value">
+					<output id="rangeOutArmR">50</output>
+				</div>
+
+				<table border="0" width="100%">
+					<tbody>
+						<tr>
+							<td>open</td>
+							<td align="center">
+								<label>Right hand</label>
+							</td>
+							<td align="right">closed</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="range range-primary">
+					<input name="rangeHandR" type="range" min="0" max="100" value="50" onchange="rangeOutHandR.value=value">
+					<output id="rangeOutHandR">50</output>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+<!-- <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script> -->
+<script src='jquery.min.js'></script>
+<!-- <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script> -->
+<script src='bootstrap.min.js'></script>
+
+<!-- Font Awesome -->
+<!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous"> -->
+<link rel="stylesheet" href="fontawesome.css">
+	
+<script type="text/javascript">
+	"use strict";
+
+	/**************************************************************************
+	 * A few utility functions
+	 */
+	function constrain(x, xmin, xmax) {
+		if (x < xmin) {
+			return xmin;
+		} else if (x > xmax) {
+			return xmax;
+		} else {
+			return x;
+		}
+	}
+
+	function map(x, xmin, xmax, ymin, ymax) {
+		return ymin + (x * 1.0 - xmin) / (xmax - xmin) * (ymax - ymin); 
+	}
+
+	function log(msg) {
+		console.log(msg);
+		var log = document.getElementById("log");
+		log.value += "\n" + msg;
+		log.scrollTop = log.scrollHeight;
+	}
+
+	/**************************************************************************
+	 * Generic joystick class
+	 * 
+	 */
+	class Joystick {
+		constructor (_canvasID, _width, _height, _callback, _useRectMode, _useCenterSpring, _useIndicator,
+			_BGColor, _constraintBGColor, _nippleFGColor) {
+
+			this.width = _width;
+			this.height = _height;
+			this.dimension = Math.min(_width, _height);
+
+			this.pos = {x: 0, y: 0}; 						// current joystick position (usually set position of robot joint)
+			this.indicator = {x: 0, y: 0}; 					// indicator position (usually current position of robot joint)
+			this.hold = false;								// is joystick currently being held by mouse or finger touch?
+			this.callback = _callback;						// function to call (with this.pos as argument) when joystick moves
+	
+			this.canvas = document.getElementById(_canvasID);
+			this.ctx2d = this.canvas.getContext("2d");
+			this.rectMode = _useRectMode;					// use rectangle or circular constraint mode?
+			this.useCenterSpring = _useCenterSpring;		// does the joystick return to {0,0} when released?
+			this.useIndicator = _useIndicator;				// whether an indicator is used to show robot joint position
+
+			this.scaling = 1.3;								// joystick constraint space size to canvas size ratio
+			this.BGColor = _BGColor;						// canvas background (also indocator color)
+			this.constraintBGColor = _constraintBGColor;	// constraint space background
+			this.nippleFGColor = _nippleFGColor;			// joystick nipple color
+			
+			this.canvas.width = this.width; 				// canvas is resized at runtime
+			this.canvas.height = this.height;
+
+			if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
+				log('Touch screen detected');
+				this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), true);
+				this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), true);
+				this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
+				this.canvas.addEventListener('touchcancel', this.onTouchEnd.bind(this));
+			} else {
+				log('No touch screen. Using mouse.');
+				this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+				this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+				this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+				this.canvas.addEventListener('mouseleave', this.onMouseUp.bind(this));
+			}
+
+			if (this.useIndicator) {						// simulate slow robot movements; for testing indicator feature
+//				this.intervalID = setInterval(this.simulateIndicator.bind(this), 1000);
+			}
+
+			this.draw();			
+		} // constructor
+
+		draw() {
+			var w = this.canvas.width;
+			var h = this.canvas.height;
+			var c = this.ctx2d;
+			var s = this.scaling;
+			var d = this.dimension;
+
+			// joystick background
+			c.fillStyle = this.BGColor;
+			c.fillRect(0, 0, w, h);
+
+			// joystick constraint space background
+			var r = d/10;
+			c.lineJoin = "round";
+			c.lineWidth = r;
+			c.fillStyle = c.strokeStyle = this.constraintBGColor;
+			if (this.rectMode) { // rectangular constraint space
+				c.strokeRect(map(-1, -s, s, 0, w) + r/2, map(-1, -s, s, 0, h) + r/2, 
+						map(1, 0, s, 0, w) - r, map(1, 0, s, 0, h) - r);
+				c.fillRect(map(-1, -s, s, 0, w) + r/2, map(-1, -s, s, 0, h) + r/2, 
+						map(1, 0, s, 0, w) - r, map(1, 0, s, 0, h) - r);
+			} else { // circular constraint space
+				c.beginPath();				
+				c.arc(w/2, h/2, map(1, 0, s, 0, d/2), 0, 2*Math.PI);
+				c.fill();
+			}
+
+			// Indicator of robot joint current position
+			if (!this.useIndicator) {
+				this.indicator = this.pos;
+			}
+			c.beginPath();
+			c.fillStyle = this.BGColor;
+			c.arc(map(this.indicator.x, -s, s, 0, w),
+					map(this.indicator.y, -s, s, h, 0),
+					d/9, 0, 2 * Math.PI);
+			c.fill();
+
+			// Finally, joystick nipple
+			c.beginPath();
+			c.arc(map(this.pos.x, -s, s, 0, w),
+					map(this.pos.y, -s, s, h, 0),
+					d/10, 0, 2 * Math.PI);		
+			c.fillStyle = this.nippleFGColor;
+			c.fill();
+		} // draw
+
+
+		simulateIndicator() {
+			var k = 0.1;
+			var dx = this.pos.x - this.indicator.x;
+			var dy = this.pos.y - this.indicator.y;
+			var md = 0.1 * (1. / 2.); // max displacement = period (100ms) * max_speed (1 * joystick range / 5 seconds)
+			dx = constrain(dx, -md, md);
+			dy = constrain(dy, -md, md);
+			this.indicator.x += dx;
+			this.indicator.y += dy;
+			this.draw();
+		}
+
+		/* 
+		   	UI events 
+		*/
+		onMouseDown(event) {
+			event.preventDefault();
+			this.hold = true;
+			this.pos = this.getPos(event);
+			this.draw();
+			this.callback(this.pos);
+		}
+
+		onMouseMove(event) {
+			if (this.hold) {
+				event.preventDefault();				
+				this.pos = this.getPos(event);
+				this.draw();
+				this.callback(this.pos);
+			}
+		}
+
+		onMouseUp(event) {
+			event.preventDefault();
+			if (this.hold) {
+				this.hold = false;
+				if (this.useCenterSpring) {
+					this.pos = {x : 0, y : 0};		
+				}
+				this.draw();
+				this.callback(this.pos);
+			}
+		}
+
+		onTouchStart(event) {
+			var touches = event.changedTouches;
+			event.preventDefault();
+			if (touches.length == 1) { // TODO: handle multitouch events
+				this.hold = true;
+				this.pos = this.getPos(touch[0]);
+				this.draw();
+				this.callback(this.pos);
+			}
+		}
+
+		onTouchMove(event) {
+			event.preventDefault();
+			var touches = event.changedTouches;
+			if (touches.length == 1 && this.hold) {
+				this.pos = this.getPos(touches[0]);
+				this.draw();
+				this.callback(this.pos);
+			}
+		}
+
+		onTouchEnd(event) {
+			event.preventDefault();
+			this.hold = false;
+			if (this.useCenterSpring) {
+				this.pos = {x: 0, y: 0};
+			}
+			this.draw();
+			this.callback(this.pos);
+		}
+
+		getPos(event) {
+			//	clientX \in [0 .. width] <--> unconstrainedX \in [-scaling .. scaling]
+			//	clientY \in [height .. 0] <--> unconstrainedY \in [-scaling .. scaling]
+			var rect = event.target.getBoundingClientRect();
+			var x = map(event.clientX - rect.left, 0, rect.width, -this.scaling, this.scaling);
+			var y = map(event.clientY - rect.top, rect.height, 0, -this.scaling, this.scaling);
+			// Apply joystick constraints
+			if (this.rectMode) {
+				// rectangular constraint mode: 
+				// constrained{X, Y} \in [-1 .. 1]
+				x = constrain(x, -1.0, 1.0);
+				y = constrain(y, -1.0, 1.0);
+			} else { 
+				// circular constraint mode
+				// constrained{X, Y} colinear to unconstrained{X, Y}; with norm <= 1.0
+				var norm = Math.sqrt(x*x + y*y);
+				if (norm > 1.0) {
+					x *= 1.0 / norm;
+					y *= 1.0 / norm;
+				}
+			}
+			return {x: x, y: y};			
+		} // getPos
+	} // class Joystick
+
+
+	function setCommandXY(DofIdX, DofIdY, pos) {
+		if (DofIdX != null) {setPos[DofIdX] = pos.x; }
+		if (DofIdY != null) {setPos[DofIdY] = pos.y; }
+		if (wsTimer == null) { // only send event if periodic send is not activated
+			send("Start!");
+		}
+	}
+
+/******************************************************************************
+ * Websocket communication handling
+ */
+var ws = null;
+var connected = false;
+var wsTimer = null;
+var t0 = null;
+
+
+function reconnect() {
+	// reconnect, if necessary
+	if (ws === null || ws.readyState === ws.CLOSED) {
+		var address = document.getElementById('formAddress').value;
+		ws = new WebSocket(address);
+		ws.onopen = function () {
+			var tstamp = new Date().valueOf();
+			ws.send('Connect at ' + tstamp);
+			log('Connected');
+			connected = true;
+		};
+		
+		ws.onerror = function (error) {
+			console.error('Client: WebSocket Error ' + error);
+			log('An error occurred');
+			connected = false;
+		};
+
+		ws.onmessage = function (e) {
+			console.log('< {' + e.data + '}');
+			log('< Got ' + e.data);
+			connected = true;
+		};
+	}
+
+	// Send current position at periodic interval
+	if (wsTimer === null) {
+		wsTimer = setInterval(function() {
+			var tstamp = new Date().valueOf();
+			if (t0 === null) t0 = tstamp;
+
+			var msg = "{";
+			for (var i = 0; i < setPos.length; i++) {
+				msg += "'" + String.fromCharCode(i + "a".charCodeAt()) + "':" + setPos[i].toFixed(1) + ",";
+			}
+			msg += "'t':" +(tstamp - t0) + "}";
+			send(msg);
+		}, 1000);
+	}
+} // reconnect
+
+function send(data) {
+	reconnect();
+	if (ws.readyState === ws.OPEN) {
+		console.log('> ' + data);
+		log('> ' + data);
+		ws.send(data);
+	} else {
+		log('No connexion. Attempting to reconnect... (> ' + data + ')');
+	}
+}
+
+
+function setup() {
+	
+	var navJoystick = new Joystick(/* _canvasID */ "canvasNavJoystick", 
+		/* _width, _height */200, 200,
+		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 1, 0), 
+		/* _useRectMode, _useCenterSpring, _useIndicator */false, true, false, 
+		/* _BGColor, _constraintBGColor, _nippleFGColor */'#eee', '#ffc653', '#ffaa00');
+
+	var headJoystick = new Joystick/* _canvasID */ ("canvasHeadJoystick", 
+		/* _width, _height */350, 200,
+		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 2, 3), 
+		/* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
+		/* _BGColor, _constraintBGColor, _nippleFGColor */'#ffd3c2', '#ff8453', '#ff4900');
+
+	var leftArmJoystick = new Joystick(/* _canvasID */ "canvasLeftArmJoystick", 
+		/* _width, _height */300, 200,
+		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 5, 4), 
+		/* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
+		/* _BGColor, _constraintBGColor, _nippleFGColor */'#bccbef', '#5278d0', '#0d40b7');
+
+	var rightArmJoystick = new Joystick(/* _canvasID */ "canvasRightArmJoystick", 
+		/* _width, _height */300, 200,
+		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 8, 7), 
+		/* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
+		/* _BGColor, _constraintBGColor, _nippleFGColor */'#bccbef', '#5278d0', '#0d40b7');
+
+	// test bootstrap style update at runtime
+	$('#buttonConnect').click(function () {
+		send('Reconnect');
+		$('#buttonConnect').removeClass("btn-primary").addClass("btn-success");
+	});
+
+	log("Remote controller loaded");
+}
+
+var setPos = [0,0,0,0,0,0,0,0,0,0];
+var curPos = [0,0,0,0,0,0,0,0,0,0];
+
+window.onload = setup();
+
+</script>
+
+	</body>
+</html>
