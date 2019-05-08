@@ -27,19 +27,6 @@ const char *OTAPassword = "walle";
 const char* mdnsName = "walle"; // Domain name for the mDNS responder
 
 
-/*
-SlowServo s0(0, 5); // Right shoulder elevation
-SlowServo s1(1, 5); // Right shoulder extension
-SlowServo s2(3, 15); // Right hand
-SlowServo s3(8, 15); // Head pan
-SlowServo s4(9, 15); // Head tilt
-SlowServo s5(12, 15); // Left hand
-SlowServo s6(14, 5); // Left shoulder extension
-SlowServo s7(15, 5); // Left shoulder elevation
-
-SlowServo servos[] = {s0, s1, s2, s3, s4, s5, s6, s7};
-*/
-
 SlowServo servos[] = {
   SlowServo(0, 5), // Right shoulder elevation
   SlowServo(1, 5), // Right shoulder extension
