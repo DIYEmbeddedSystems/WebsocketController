@@ -592,6 +592,7 @@ function reconnect() {
 		ws.onmessage = function (e) {
 			console.log('< {' + e.data + '}');
 			log('< Got ' + e.data);
+			parseMessage(e.data);
 			connected = true;
 		};
 	}
@@ -602,12 +603,15 @@ function reconnect() {
 			var tstamp = new Date().valueOf();
 			if (t0 === null) t0 = tstamp;
 
-			var msg = "{";
+/* 			var msg = "{";
 			for (var i = 0; i < setPos.length; i++) {
 				msg += "'" + String.fromCharCode(i + "a".charCodeAt()) + "':" + setPos[i].toFixed(1) + ",";
 			}
 			msg += "'t':" +(tstamp - t0) + "}";
-			send(msg);
+ */			
+			var msg = "@"  + setPos.map(x => Math.round(100*x)).join(",") + ",t:" + (tstamp-t0);
+
+ 			send(msg);
 		}, 1000);
 	}
 } // reconnect
@@ -623,28 +627,46 @@ function send(data) {
 	}
 }
 
+function parseMessage(msg) {
+	if (msg.charAt(0) == '#' || msg.charAt(0) == '@') {
+		msg = msg.slice(1); // remove first character
+		curPos = msg.split(',').slice(0,10).map(x => x * .01);
+		//log('Parsed ' + curPos.map(x => x.toFixed(2)).join(","));
+		
+		// Todo: generalize usage of DofIdX and DofIdY for indicator
+		navJoystick.indicator = {x: curPos[1], y: curPos[0]};
+		headJoystick.indicator = {x: curPos[2], y: curPos[3]};
+		leftArmJoystick.indicator = {x: curPos[5], y: curPos[4]};
+		rightArmJoystick.indicator = {x: curPos[8], y: curPos[7]};
+		headJoystick.draw();
+		leftArmJoystick.draw();
+		rightArmJoystick.draw();
+	} else {
+		log("Wrong format '" + msg + "'");
+	}
+}
 
 function setup() {
 	
-	var navJoystick = new Joystick(/* _canvasID */ "canvasNavJoystick", 
+	navJoystick = new Joystick(/* _canvasID */ "canvasNavJoystick", 
 		/* _width, _height */200, 200,
 		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 1, 0), 
 		/* _useRectMode, _useCenterSpring, _useIndicator */false, true, false, 
 		/* _BGColor, _constraintBGColor, _nippleFGColor */'#eee', '#ffc653', '#ffaa00');
 
-	var headJoystick = new Joystick/* _canvasID */ ("canvasHeadJoystick", 
+	headJoystick = new Joystick/* _canvasID */ ("canvasHeadJoystick", 
 		/* _width, _height */350, 200,
 		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 2, 3), 
 		/* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
 		/* _BGColor, _constraintBGColor, _nippleFGColor */'#ffd3c2', '#ff8453', '#ff4900');
 
-	var leftArmJoystick = new Joystick(/* _canvasID */ "canvasLeftArmJoystick", 
+	leftArmJoystick = new Joystick(/* _canvasID */ "canvasLeftArmJoystick", 
 		/* _width, _height */300, 200,
 		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 5, 4), 
 		/* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
 		/* _BGColor, _constraintBGColor, _nippleFGColor */'#bccbef', '#5278d0', '#0d40b7');
 
-	var rightArmJoystick = new Joystick(/* _canvasID */ "canvasRightArmJoystick", 
+	rightArmJoystick = new Joystick(/* _canvasID */ "canvasRightArmJoystick", 
 		/* _width, _height */300, 200,
 		/* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 8, 7), 
 		/* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
@@ -661,6 +683,11 @@ function setup() {
 
 var setPos = [0,0,0,0,0,0,0,0,0,0];
 var curPos = [0,0,0,0,0,0,0,0,0,0];
+var navJoystick;
+var headJoystick;
+var leftArmJoystick;
+var rightArmJoystick;
+
 
 window.onload = setup();
 

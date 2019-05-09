@@ -56,6 +56,9 @@ The ESP8266 runs the WebsocketControl.ino Arduino sketch. In brief, this sketch 
     + whenever a telecommand is received, parse command message, update accordingly robot commanded state;
 - update control loops, and command actuators accordingly.
 
+#### SlowServo library
+Fast servo movements at certain joints may cause a large torque which would certainly damage the somehow weak gears & motors. Moreover, if collision avoidance or range limits are not well implemented (especially during the debugging phase), collisions may occur and cause similar damage. For this reason, I have implemented a SlowServo library: a library for controlling a servo via a classic PWM interface, but with additional open-loop control that limits its range of motion and angular speed.
+
 ### Data 
 The SPI flash on the Wemos board stores the (compiled) Arduino sketch, as well as several data files (version controlled in the data/ folder).
 
@@ -73,6 +76,24 @@ The UI is designed as a single web page, featuring:
 
 # Interactions & protocol
 TBD
+
+@startuml
+
+User -> UI: touch joystick
+UI -> UI: convert touch screen position
+UI -> User: show joystick position
+UI -> Robot: send joints set positions
+Robot -> Robot: convert set position to actuator range
+Robot -> Robot: interpolate 
+Robot -> UI: send list of current positions
+UI -> UI: update indicators accordingly
+UI -> User: show indicators
+
+@enduml
+
+![UML interaction diagram](https://www.plantuml.com/plantuml/img/PP1D4i8m24RtEGKNy09TEDrswqmF40csqHewG7HwUrF7_gXBXiVxW5hDY-Nxu5oh970uGjjKO9onXojFQX5lhcsM1d9waDW7K1IY12DhjCXfuOge0ktvkHf-aHEVsGf3AS0GrO0lfR0LK_ScTkWIlAVA5k0ncpSM49ywsiRcPR_qc4KexIEsg_8Ol17452BECYrQP0anTSFqVzN6ELUNZFA-5m00)
+
+Plantuml diagram generated with https://www.planttext.com/
 
 ## Message sequence
 TBD

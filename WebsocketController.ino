@@ -70,6 +70,20 @@ void loop() {
   ArduinoOTA.handle();                        // check incoming over-the-air updates
   serialCommand();                            // check serial comm commands
   report();                                   // periodically report state
+  webSocketReport();
+  controlLoop();
+}
+
+void controlLoop() {
+  static long int next_ms = 0;
+  const long int period_ms = 10;
+  
+  if (millis() >= next_ms) {
+    next_ms += period_ms;
+    for (int i = 0; i < sizeof(servos)/sizeof(servos[0]); i++) {
+      servos[i].update();
+    }
+  }
 }
 
 /*__________________________________________________________SERIAL__________________________________________________________*/
@@ -95,7 +109,6 @@ void parseCommand(uint8_t *payload, size_t len) {
   long int x;
   /* handle commands of the form '@123,45,-67,8,90,12,-34' */
   if (*s++ != '@') return;
-  Serial.printf("Got {");
   for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
     x = strtol(s, &s, 10);
     Serial.printf("[%d] := %d, ", i, x);
@@ -106,7 +119,7 @@ void parseCommand(uint8_t *payload, size_t len) {
       break;
     }
   }
-  Serial.printf("}\n");
+  Serial.printf("\n");
 }
 
 void report() {
@@ -116,17 +129,34 @@ void report() {
   if (millis() >= next_ms) {
     next_ms += period_ms;
 
-    String s = "Servos {";
+    String s = "#";
     for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
-      s += i;
-      s += " : ";
       s += servos[i].read();
-      s += ", \t";
+      s += ",";
     }
-    s += "} at ";
+    s += "t:";
     s += millis();
-    s += ".";
-    Serial.println(s);
+    s += "\r\n";
+    Serial.print(s);
+  }
+}
+
+void webSocketReport() {
+  static long int next_ms = 0;
+  const long int period_ms = 100;
+  
+  if (millis() >= next_ms) {
+    next_ms += period_ms;
+    
+    String s = "#";
+    for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
+      s += servos[i].read();
+      s += ",";
+    }
+    s += "t:";
+    s += millis();
+    s += "\r\n";
+    webSocket.broadcastTXT(s.c_str(), s.length());
   }
 }
 
@@ -190,7 +220,7 @@ void startSPIFFS() { // Start the SPIFFS and list all contents
     while (dir.next()) {                      // List the file system contents
       String fileName = dir.fileName();
       size_t fileSize = dir.fileSize();
-      Serial.printf("\tFS File: %s, size: %s\r\n", fileName.c_str(), formatBytes(fileSize).c_str());
+      Serial.printf("\tFS File: %s [%s]\r\n", fileName.c_str(), formatBytes(fileSize).c_str());
     }
     Serial.printf("\n");
   }
