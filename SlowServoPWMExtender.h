@@ -1,5 +1,21 @@
-#include <Wire.h>
-#include <Adafruit_PWMServoDriver.h>
+/**
+ * @file SlowServoPWMExtender.h
+ * 
+ * @brief An Arduino library for SlowServo behind PWM expander (PCA9685). 
+ * 
+ * @author Etienne Hamelin (etienne.hamelin@gmail.com ; www.github.com/etiennehamelin)
+ * 
+ * @licence 
+ * You may freely use, compile, link, copy, adapt, distribute, this software,
+ * as long as you keep this author & license header.
+ * Happy hacking!
+ * 
+ */
+
+
+#include <Wire.h>                     // I2C communication with PCA9685 I2C hardware PWM controller
+#include <Adafruit_PWMServoDriver.h>  // PCA9685 I2C hardware PWM controller driver
+
 
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
@@ -10,9 +26,12 @@ public:
   int16_t _min_pulse, _max_pulse;  
   long int _start_ms, _end_ms;
   int _num;
-  int16_t _max_dps; // maximum speed in degrees per second
+  int16_t _max_dps;
   static bool _pwm_started;
 
+  /**
+   * Constructors
+   */
   SlowServo() {
     SlowServo(0, 600);
   }
@@ -30,6 +49,9 @@ public:
     setup(num, max_dps);
   }
 
+  /**
+   * Initializor
+   */
   void setup(int num, int16_t max_dps) {
     _num = num;
     _last_pulse = -1; // force send in first call to update()
@@ -39,38 +61,74 @@ public:
     _max_dps = max_dps;    
   }
 
+
+  /** 
+   * Utilities
+   */
   int16_t deg2pulse(int16_t deg) {
 //    return map(deg, -90, 90, 123, 492); // 600 .. 2400 us pulses
     return map(deg, -90, 90, 143, 471); // 700 .. 2300 pulses
+  }
+
+  int16_t pulse2deg(int16_t pulse) {
+    return map(pulse, 143, 471, -90, 90);
   }
 
   void setLimits(int16_t min_deg, int16_t max_deg) {
     _min_pulse = deg2pulse(min_deg);
     _max_pulse = deg2pulse(max_deg);
   }
-  
+
+  int16_t get_min_deg() {
+    return pulse2deg(_min_pulse);
+  }
+
+  int16_t get_max_deg() {
+    return pulse2deg(_max_pulse);
+  }
+
+
+  /**
+   * Main API
+   */
+
+  /**
+   * @brief Set servo to move towards given position, at maximum allowed speed
+   * @param degree: servo set position
+   */
+  void write(int16_t degree) {
+    write_speed(degree, _max_dps);
+  }
+
+ /**
+   * @brief Set servo to move towards given position in given delay
+   * @param degree: servo set position
+   * @param delay_ms: how much time the servo should take to arrive at set pos
+   */
+  void write_delay(int16_t degree, long int delay_ms) {
+    delay_ms = constrain(delay_ms, 0, 60000); // make sure delay is between 0 ms and < 1 minute
+    write_pulse(deg2pulse(degree), delay_ms);
+  }
+
+ /**
+   * @brief Set servo to move towards given position at given speed 
+   * @param degree: servo set position
+   * @param speed_dps: angular velocity in degree per second
+   */
+  void write_speed(int16_t degree, int16_t speed_dps) {
+    degree = constrain(degree, -90, 90);
+    speed_dps = constrain(speed_dps, 1, 360); /* arbitrary max 360°/s */
+    int16_t pulse = deg2pulse(degree);
+    // delay_ms = degrees / deg_per_ms = 1000 * deg/deg_per_s;
+    long int delay_ms = abs(degree - read()) * 100 / speed_dps;
+    write_pulse(pulse, delay_ms);
+  }
+
   void write_pulse(int16_t pulse, long int delay_ms) {
     _start_pulse = _curr_pulse;
     _end_pulse = pulse;
     _start_ms = millis();
     _end_ms = _start_ms + delay_ms;
-  }
-
-  void write(int16_t degree, long int delay_ms) {
-    write_pulse(deg2pulse(degree), delay_ms);
-  }
-
-  void write(int16_t degree) {
-    write_speed(degree, _max_dps);
-  }
-
-  void write_speed(int16_t degree, int16_t speed_dps) {
-    degree = constrain(degree, -90, 90);
-    speed_dps = constrain(speed_dps, 1, 100); /* arbitrary max 100°/s */
-    int16_t pulse = deg2pulse(degree);
-    // delay_ms = degrees / deg_per_ms = 1000 * deg/deg_per_s;
-    long int delay_ms = abs(degree - read()) * 100 / speed_dps;
-    write_pulse(pulse, delay_ms);
   }
 
   int16_t read_pulse() {
