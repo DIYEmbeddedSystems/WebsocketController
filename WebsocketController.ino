@@ -1,3 +1,18 @@
+/**
+ * @file WebsocketController.ino
+ * 
+ * @brief The Arduino main program for HTML & websocket-based robot telecommand
+ * 
+ * @author Etienne Hamelin (etienne.hamelin@gmail.com ; www.github.com/etiennehamelin)
+ * 
+ * @licence 
+ * You may freely use, compile, link, copy, adapt, distribute, this software,
+ * as long as you keep this author & license header.
+ * Happy hacking!
+ * 
+ */
+
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoOTA.h>
@@ -6,18 +21,17 @@
 #include <FS.h>
 #include <WebSocketsServer.h>
 
-#include "SlowServoPWMExtender.h"
+#include "SlowServoPWMExpander.h"
+
+#include "credentials.h"
 
 
-ESP8266WiFiMulti wifiMulti;       // Create an instance of the ESP8266WiFiMulti class, called 'wifiMulti'
+ESP8266WiFiMulti wifiMulti;        // ESP8266WiFiMulti simplifies handling of multiple access points
+ESP8266WebServer server(80);       // web server on port 80, serves files
+WebSocketsServer webSocket(81);    // websocket server on port 81, handles telecommand/telemetry
 
-ESP8266WebServer server(80);       // create a web server on port 80
-WebSocketsServer webSocket(81);    // create a websocket server on port 81
+File fsUploadFile;                 // a File variable to temporarily store the received file
 
-File fsUploadFile;                                    // a File variable to temporarily store the received file
-
-#define AP_SSID "myaccesspointssid"
-#define AP_PASSWORD "mypassword"
 
 const char *ssid = "AP-WallE"; // The name of the Wi-Fi network that will be created
 const char *password = "eve";   // The password required to connect to it, leave blank for an open network
