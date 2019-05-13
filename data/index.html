@@ -180,6 +180,65 @@
 				<textarea id="log" class="form-control" height="200">...</textarea>
 			</div>
 		</div>
+		<div class="col-md-8">
+			<div class="jumbotron">
+				<table class="table" id="dataTable" cellspacing="1" cellpadding="1">
+					<col align="left">
+					<col align="left">
+					<col align="right">
+					<col align="right">
+					<thead>
+					  <tr>
+						<th>#</th>
+						<th>Joint ID</th>
+						<th>Set position (°)</th>
+						<th>Current pos (°)</th>
+					  </tr>
+					</thead>
+					<tbody>
+					  <tr>
+						<th scope="row">0</th>
+						<td>R shoulder elevation</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">1</th>
+						<td>R shoulder extension</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">2</th>
+						<td>R hand</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">3</th>
+						<td>Head pan</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">4</th>
+						<td>L shoulder extension</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">5</th>
+						<td>L shoulder elevation</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">6</th>
+						<td>Forward</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					  <tr>
+						<th scope="row">7</th>
+						<td>Rotation</td>
+						<td>NA</td><td>NA</td>
+					  </tr>
+					</tbody>
+				  </table>			</div>	
+		</div>
 	</div>
 	<div class="row">
 		<div class="col-md-4">
@@ -555,8 +614,14 @@
 
 
 	function setCommandXY(DofIdX, DofIdY, pos) {
-		if (DofIdX != null) {setPos[DofIdX] = pos.x; }
-		if (DofIdY != null) {setPos[DofIdY] = pos.y; }
+		if (DofIdX != null) {
+			setPos[DofIdX] = pos.x; 
+			document.getElementById('dataTable').rows[DofIdX].cells[2].innerHTML = pos.x.toFixed(2); //map(pos.x, -1.0, 1.0, -90, 90).toFixed(2);
+		}
+		if (DofIdY != null) {
+			setPos[DofIdY] = pos.y; 
+			document.getElementById('dataTable').rows[DofIdY].cells[2].innerHTML = pos.y.toFixed(2);  //map(pos.y, -1.0, 1.0, -90, 90).toFixed(2);
+		}
 		if (wsTimer == null) { // only send event if periodic send is not activated
 			send("Start!");
 		}
@@ -641,6 +706,17 @@ function parseMessage(msg) {
 		headJoystick.draw();
 		leftArmJoystick.draw();
 		rightArmJoystick.draw();
+
+		for (var i = 0; i < curPos.length; i++) {
+			var table = document.getElementById('dataTable');
+			if (i+1 <= table.rows.length) {
+				table.rows[i+1].cells[3].innerHTML = curPos[i].toFixed(2); //map(curPos[i], -1.0, 1.0, -90.0, 90.0).toFixed(2);
+			} else {
+				console.log("Table length overflow! " + curPos.length);
+			}
+
+		}
+		
 	} else {
 		log("Wrong format '" + msg + "'");
 	}
@@ -681,8 +757,8 @@ function setup() {
 	log("Remote controller loaded");
 }
 
-var setPos = [0,0,0,0,0,0,0,0,0,0];
-var curPos = [0,0,0,0,0,0,0,0,0,0];
+var setPos = [0,0,0,0,0,0,0,0];
+var curPos = [0,0,0,0,0,0,0,0];
 var navJoystick;
 var headJoystick;
 var leftArmJoystick;

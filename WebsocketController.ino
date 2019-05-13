@@ -86,6 +86,21 @@ void loop() {
   report();                                   // periodically report state
   webSocketReport();
   controlLoop();
+
+  test();
+}
+
+void test() {
+  static long int next_ms = 0;
+  const long int period_ms = 1000;
+
+  static int16_t pos = 45;
+  
+  if (millis() >= next_ms) {
+    next_ms += period_ms; 
+    servos[3].write_speed(pos, 90);
+    pos = -pos;
+  }
 }
 
 void controlLoop() {
@@ -125,7 +140,7 @@ void parseCommand(uint8_t *payload, size_t len) {
   if (*s++ != '@') return;
   for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
     x = strtol(s, &s, 10);
-    Serial.printf("[%d] := %d, ", i, x);
+//    Serial.printf("[%d] := %d, ", i, x);
     servos[i].write(x);
     if (*s == ',') {
       ++s;
@@ -133,7 +148,7 @@ void parseCommand(uint8_t *payload, size_t len) {
       break;
     }
   }
-  Serial.printf("\n");
+//  Serial.printf("\n");
 }
 
 void report() {
@@ -146,6 +161,9 @@ void report() {
     String s = "#";
     for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
       s += servos[i].read();
+      s += " ("; 
+      s += servos[i]._curr_pulse; 
+      s += ")";
       s += ",";
     }
     s += "t:";
@@ -157,7 +175,7 @@ void report() {
 
 void webSocketReport() {
   static long int next_ms = 0;
-  const long int period_ms = 100;
+  const long int period_ms = 500;
   
   if (millis() >= next_ms) {
     next_ms += period_ms;

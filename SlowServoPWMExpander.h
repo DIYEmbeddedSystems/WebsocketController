@@ -20,22 +20,25 @@
 #define MAX_DPS_DEFAULT 600
 
 #ifdef SERVO_EXTENDED_RANGE
-// Extended servo range: input values from -120° to 120°, pulse lengths from 600us to 2400us
-#define SERVO_MIN (-120)
-#define SERVO_MAX (120)
-#define MIN_PULSE (122)
-#define MAX_PULSE (491)
+  // Extended servo range: input values from -120° to 120°, pulse lengths from 600us to 2400us
+  #define SERVO_MIN (-120)
+  #define SERVO_MAX (120)
+  #define MIN_PULSE (122)
+  #define MAX_PULSE (491)
 #else
-// Standard servo range: input values from -90° to 90°, pulse lengths from 700us to 2300us
-#define SERVO_MIN (-90)
-#define SERVO_MAX (90)
-#define MIN_PULSE (143)
-#define MAX_PULSE (471)
+  // Standard servo range: input values from -90° to 90°, pulse lengths from 700us to 2300us
+  #define SERVO_MIN (-90)
+  #define SERVO_MAX (90)
+  #define MIN_PULSE (143)
+  #define MAX_PULSE (471)
 #endif
-#define MED_PULSE (MIN_PULSE + MAX_PULSE)/2
+#define MED_PULSE ((MIN_PULSE + MAX_PULSE)/2)
+
 
 class SlowServo {
-private:
+
+public:
+//private:
   int16_t _curr_pulse, _last_pulse, _start_pulse, _end_pulse;
   int16_t _min_pulse, _max_pulse;  
   long int _start_ms, _end_ms;
@@ -46,7 +49,7 @@ private:
   static bool _pwm_started;
   static Adafruit_PWMServoDriver _pwm;
 
-public:
+//public:
   /**
    * \brief Constructor
    * 
@@ -79,11 +82,11 @@ public:
    * Utilities
    */
   int16_t deg2pulse(int16_t deg) {
-    return map(deg, -SERVO_MIN, SERVO_MAX, MIN_PULSE, MAX_PULSE);
+    return map(deg, SERVO_MIN, SERVO_MAX, MIN_PULSE, MAX_PULSE);
   }
 
   int16_t pulse2deg(int16_t pulse) {
-    return map(pulse, MIN_PULSE, MAX_PULSE, -SERVO_MIN, SERVO_MAX);
+    return map(pulse, MIN_PULSE, MAX_PULSE, SERVO_MIN, SERVO_MAX);
   }
 
   int16_t get_min_deg() {
