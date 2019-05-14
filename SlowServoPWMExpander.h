@@ -126,7 +126,7 @@ public:
    * @param speed_dps: angular velocity in degree per second
    */
   void write_speed(int16_t degree, int16_t speed_dps = MAX_DPS_DEFAULT) {
-    degree = constrain(degree, -SERVO_MIN, SERVO_MAX);
+    degree = constrain(degree, SERVO_MIN, SERVO_MAX);
     speed_dps = constrain(speed_dps, 1, MAX_DPS_DEFAULT); /* arbitrary max 360°/s */
     int16_t pulse = deg2pulse(degree);
     // delay_ms = degrees / deg_per_ms = 1000 * deg/deg_per_s;
@@ -146,9 +146,13 @@ public:
   }
   
   int16_t read() {
-    return map(read_pulse(), 123, 492, -90, 90);
+    return map(read_pulse(), MIN_PULSE, MAX_PULSE, SERVO_MIN, SERVO_MAX);
   }
 
+  bool is_moving() {
+    return _curr_pulse == _end_pulse;
+  }
+  
   // Make sure the update() function is called frequently, e.g. every few milliseconds
   void update() {
     long int now = millis();

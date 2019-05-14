@@ -76,6 +76,7 @@ void setup() {
   Serial.println("\n\n\n\nGo!\n\n\n");
 }
 
+
 /*__________________________________________________________LOOP__________________________________________________________*/
 
 void loop() {
@@ -92,13 +93,15 @@ void loop() {
 
 void test() {
   static long int next_ms = 0;
-  const long int period_ms = 1000;
+  const long int period_ms = 5000;
 
-  static int16_t pos = 45;
+  static int16_t pos = 90;
   
   if (millis() >= next_ms) {
-    next_ms += period_ms; 
-    servos[3].write_speed(pos, 90);
+    next_ms += period_ms;
+    Serial.print("Moving servo 3 to ");
+    Serial.println(pos);
+    servos[3].write_delay(pos, period_ms);
     pos = -pos;
   }
 }
@@ -153,7 +156,7 @@ void parseCommand(uint8_t *payload, size_t len) {
 
 void report() {
   static long int next_ms = 0;
-  const long int period_ms = 3000;
+  const long int period_ms = 1000;
   
   if (millis() >= next_ms) {
     next_ms += period_ms;
@@ -164,7 +167,7 @@ void report() {
       s += " ("; 
       s += servos[i]._curr_pulse; 
       s += ")";
-      s += ",";
+      s += "\t";
     }
     s += "t:";
     s += millis();
