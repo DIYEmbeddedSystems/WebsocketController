@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Secret files
+secret*
+credentials*
