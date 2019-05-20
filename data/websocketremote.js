@@ -29,7 +29,7 @@ function log(msg) {
  * 
  */
 class Joystick {
-    constructor (_canvasID, _width, _height, _callback, _useRectMode, _useCenterSpring, _useIndicator,
+    constructor (_canvasID, _width, _height, _DofIdX, _DofIdY, _useRectMode, _useCenterSpring, _useIndicator,
         _BGColor, _constraintBGColor, _nippleFGColor) {
 
         this.width = _width;
@@ -39,7 +39,7 @@ class Joystick {
         this.pos = {x: 0, y: 0}; 						// current joystick position (usually set position of robot joint)
         this.indicator = {x: 0, y: 0}; 					// indicator position (usually current position of robot joint)
         this.hold = false;								// is joystick currently being held by mouse or finger touch?
-        this.callback = _callback;						// function to call (with this.pos as argument) when joystick moves
+        this.callback = setCommandXY.bind(null, _DofIdX, _DofIdY); 
 
         this.canvas = document.getElementById(_canvasID);
         this.ctx2d = this.canvas.getContext("2d");
@@ -225,19 +225,27 @@ class Joystick {
 } // class Joystick
 
 
+/**
+ * 
+ * @param {*} DofIdX 
+ * @param {*} DofIdY 
+ * @param {*} pos 
+ */
 function setCommandXY(DofIdX, DofIdY, pos) {
     if (DofIdX != null) {
         setPos[DofIdX] = pos.x; 
-        document.getElementById('dataTable').rows[DofIdX].cells[2].innerHTML = pos.x.toFixed(2); //map(pos.x, -1.0, 1.0, -90, 90).toFixed(2);
+        document.getElementById('dataTable').rows[DofIdX+1].cells[2].innerHTML = pos.x.toFixed(2); //map(pos.x, -1.0, 1.0, -90, 90).toFixed(2);
     }
     if (DofIdY != null) {
         setPos[DofIdY] = pos.y; 
-        document.getElementById('dataTable').rows[DofIdY].cells[2].innerHTML = pos.y.toFixed(2);  //map(pos.y, -1.0, 1.0, -90, 90).toFixed(2);
+        document.getElementById('dataTable').rows[DofIdY+1].cells[2].innerHTML = pos.y.toFixed(2);  //map(pos.y, -1.0, 1.0, -90, 90).toFixed(2);
     }
     if (wsTimer == null) { // only send event if periodic send is not activated
         send("Start!");
     }
 }
+
+
 
 /******************************************************************************
 * Websocket communication handling
@@ -308,8 +316,7 @@ function parseMessage(msg) {
 if (msg.charAt(0) == '#' || msg.charAt(0) == '@') {
     msg = msg.slice(1); // remove first character
     curPos = msg.split(',').slice(0,10).map(x => x * .01);
-    //log('Parsed ' + curPos.map(x => x.toFixed(2)).join(","));
-    
+
     // Todo: generalize usage of DofIdX and DofIdY for indicator
     navJoystick.indicator = {x: curPos[1], y: curPos[0]};
     headJoystick.indicator = {x: curPos[2], y: curPos[3]};
@@ -321,56 +328,84 @@ if (msg.charAt(0) == '#' || msg.charAt(0) == '@') {
 
     for (var i = 0; i < curPos.length; i++) {
         var table = document.getElementById('dataTable');
-        if (i+1 <= table.rows.length) {
+        if (i+1 < table.rows.length) {
             table.rows[i+1].cells[3].innerHTML = curPos[i].toFixed(2); //map(curPos[i], -1.0, 1.0, -90.0, 90.0).toFixed(2);
         } else {
             console.log("Table length overflow! " + curPos.length);
         }
-
     }
-    
-} else {
-    log("Wrong format '" + msg + "'");
+
+    } else {
+        log("Wrong format '" + msg + "'");
+    }
 }
+
+function updateDoFTable(dofId, value) {
+    var table = document.getElementById('dataTable');
+    if (0 <= dofId && dofId < table.rows.length-1) {
+        table.rows[dofId+1].cells[3].innerHTML = value.toFixed(2);
+    }
 }
 
 function setup() {
 
 navJoystick = new Joystick(/* _canvasID */ "canvasNavJoystick", 
     /* _width, _height */200, 200,
-    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 1, 0), 
+    /* DofIdX, DofIdY */ 1, 0,
+//    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 1, 0), 
     /* _useRectMode, _useCenterSpring, _useIndicator */false, true, false, 
     /* _BGColor, _constraintBGColor, _nippleFGColor */'#eee', '#ffc653', '#ffaa00');
 
 headJoystick = new Joystick/* _canvasID */ ("canvasHeadJoystick", 
     /* _width, _height */350, 200,
-    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 2, 3), 
+    /* DofIdX, DofIdY */ 2, 3,
+//    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 2, 3), 
     /* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
     /* _BGColor, _constraintBGColor, _nippleFGColor */'#ffd3c2', '#ff8453', '#ff4900');
 
 leftArmJoystick = new Joystick(/* _canvasID */ "canvasLeftArmJoystick", 
     /* _width, _height */300, 200,
-    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 5, 4), 
+    /* DofIdX, DofIdY */ 8, 7,
+//    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 8, 7), 
     /* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
     /* _BGColor, _constraintBGColor, _nippleFGColor */'#bccbef', '#5278d0', '#0d40b7');
 
 rightArmJoystick = new Joystick(/* _canvasID */ "canvasRightArmJoystick", 
     /* _width, _height */300, 200,
-    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 8, 7), 
+    /* DofIdX, DofIdY */ 5, 4,
+//    /* _callback(DofIdX, DofIdY) */setCommandXY.bind(null, 5, 4), 
     /* _useRectMode, _useCenterSpring, _useIndicator */true, false, true, 
     /* _BGColor, _constraintBGColor, _nippleFGColor */'#bccbef', '#5278d0', '#0d40b7');
 
-// test bootstrap style update at runtime
+
+
 $('#buttonConnect').click(function () {
     send('Reconnect');
     $('#buttonConnect').removeClass("btn-primary").addClass("btn-success");
 });
 
+$('#buttonTest').click(function () {
+    document.getElementById('formAddress').value="ws://demos.kaazing.com/echo";
+    send('Reconnect');
+    $('#buttonTest').removeClass("btn-primary").addClass("btn-success");
+});
+
 log("Remote controller loaded");
 }
 
-var setPos = [0,0,0,0,0,0,0,0];
-var curPos = [0,0,0,0,0,0,0,0];
+var M_FORWARD = 0,
+    M_TURN_RIGHT = 1,
+    H_PAN = 2, 
+    H_TILT = 3, 
+    R_SHOULDER_ELEVATION = 4, 
+    R_SHOULDER_EXTENSION = 5, 
+    R_HAND = 6, 
+    L_SHOULDER_ELEVATION = 7,
+    L_SHOULDER_EXTENSION = 8, 
+    L_HAND = 9;
+
+var setPos = [0,0,0,0,0,0,0,0,0,0];
+var curPos = [0,0,0,0,0,0,0,0,0,0];
 var navJoystick;
 var headJoystick;
 var leftArmJoystick;

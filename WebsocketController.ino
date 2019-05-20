@@ -40,6 +40,18 @@ const char *OTAName = "walle";           // A name and a password for the OTA se
 const char *OTAPassword = "walle";
 const char* mdnsName = "walle"; // Domain name for the mDNS responder
 
+enum dof_id_e {
+  M_FORWARD = 0,
+  M_TURN_RIGHT = 1,
+  H_PAN = 2, 
+  H_TILT = 3, 
+  R_SHOULDER_ELEVATION = 4, 
+  R_SHOULDER_EXTENSION = 5, 
+  R_HAND = 6, 
+  L_SHOULDER_ELEVATION = 7,
+  L_SHOULDER_EXTENSION = 8, 
+  L_HAND = 9, 
+};
 
 SlowServo servos[] = {
   SlowServo(0, 5), // Right shoulder elevation
@@ -51,6 +63,7 @@ SlowServo servos[] = {
   SlowServo(14, 5), // Left shoulder extension
   SlowServo(15, 5), // Left shoulder elevation
 };
+
 
 /*__________________________________________________________SETUP__________________________________________________________*/
 
