@@ -54,14 +54,15 @@ enum dof_id_e {
 };
 
 SlowServo servos[] = {
-  SlowServo(0, 5), // Right shoulder elevation
-  SlowServo(1, 5), // Right shoulder extension
-  SlowServo(3, 15), // Right hand
-  SlowServo(8, 15), // Head pan
-  SlowServo(9, 15), // Head tilt
-  SlowServo(12, 15), // Left hand
-  SlowServo(14, 5), // Left shoulder extension
-  SlowServo(15, 5), // Left shoulder elevation
+// SlowServo(pinNum, maxDegreePerSecond, minDeg, maxDev, inverted)
+  SlowServo(8, 60), // Head pan
+  SlowServo(9, 60), // Head tilt
+  SlowServo(0, 15), // Right shoulder elevation
+  SlowServo(1, 15), // Right shoulder extension
+  SlowServo(3, 60), // Right hand
+  SlowServo(15, 15), // Left shoulder elevation
+  SlowServo(14, 15), // Left shoulder extension
+  SlowServo(12, 60), // Left hand
 };
 
 
@@ -87,8 +88,34 @@ void setup() {
   Serial.println("HTTP server ready");
 
   Serial.println("\n\n\n\nGo!\n\n\n");
+
+  initial_test();
 }
 
+
+void initial_test() {
+  int n;
+  long int t0;
+  t0 = millis();
+  n = sizeof(servos)/sizeof(servos[0]);
+
+  Serial.println("Move all servos to 5°");
+  for (int i = 0; i < n; i++) {
+    servos[i].write(5);
+  } 
+
+  while (millis() < t0 + 5000) {
+    for (int i = 0; i < n; i++) {
+      servos[i].update();
+    }  
+    yield();   
+  }
+
+  Serial.println("Move back to 0°");
+  for (int i = 0; i < n; i++) {
+    servos[i].write(0);
+  }
+}
 
 /*__________________________________________________________LOOP__________________________________________________________*/
 
@@ -114,7 +141,7 @@ void test() {
     next_ms += period_ms;
     Serial.print("Moving servo 3 to ");
     Serial.println(pos);
-    servos[3].write_delay(pos, period_ms);
+    servos[3].write_delay(pos, period_ms/2);
     pos = -pos;
   }
 }
@@ -153,7 +180,15 @@ void parseCommand(uint8_t *payload, size_t len) {
   char *s = (char *)payload;
   long int x;
   /* handle commands of the form '@123,45,-67,8,90,12,-34' */
-  if (*s++ != '@') return;
+  if (*s++ != '@') {
+    return;
+  }
+  long int fwd, turn;
+  fwd = strtol(s, &s, 10);
+  if (*s++ != ',') { return ;}
+  turn = strtol(s, &s, 10);
+  if (*s++ != ',') { return; }
+  
   for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
     x = strtol(s, &s, 10);
 //    Serial.printf("[%d] := %d, ", i, x);
@@ -191,12 +226,14 @@ void report() {
 
 void webSocketReport() {
   static long int next_ms = 0;
-  const long int period_ms = 500;
+  const long int period_ms = 501;
   
   if (millis() >= next_ms) {
     next_ms += period_ms;
     
     String s = "#";
+    s += "0,"; /* forward move */
+    s += "0,"; /* turning */
     for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
       s += servos[i].read();
       s += ",";
@@ -369,7 +406,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t len) {
       parseCommand(payload, len);
       break;
     default:
-      Serial.printf("Unhandled websocket event [%d].\n", type);
+      Serial.printf("Unhandled websocket event [%d] from client [%u].\n", type, num);
       break; 
   }
 }

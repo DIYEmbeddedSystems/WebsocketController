@@ -234,11 +234,11 @@ class Joystick {
 function setCommandXY(DofIdX, DofIdY, pos) {
     if (DofIdX != null) {
         setPos[DofIdX] = pos.x; 
-        document.getElementById('dataTable').rows[DofIdX+1].cells[2].innerHTML = pos.x.toFixed(2); //map(pos.x, -1.0, 1.0, -90, 90).toFixed(2);
+        document.getElementById('dataTable').rows[DofIdX+1].cells[2].innerHTML = Math.round(pos.x*100); //map(pos.x, -1.0, 1.0, -90, 90).toFixed(2);
     }
     if (DofIdY != null) {
         setPos[DofIdY] = pos.y; 
-        document.getElementById('dataTable').rows[DofIdY+1].cells[2].innerHTML = pos.y.toFixed(2);  //map(pos.y, -1.0, 1.0, -90, 90).toFixed(2);
+        document.getElementById('dataTable').rows[DofIdY+1].cells[2].innerHTML = Math.round(pos.y*100);  //map(pos.y, -1.0, 1.0, -90, 90).toFixed(2);
     }
     if (wsTimer == null) { // only send event if periodic send is not activated
         send("Start!");
@@ -257,83 +257,83 @@ var t0 = null;
 
 
 function reconnect() {
-// reconnect, if necessary
-if (ws === null || ws.readyState === ws.CLOSED) {
-    var address = document.getElementById('formAddress').value;
-    ws = new WebSocket(address);
-    ws.onopen = function () {
-        var tstamp = new Date().valueOf();
-        ws.send('Connect at ' + tstamp);
-        log('Connected');
-        connected = true;
-    };
-    
-    ws.onerror = function (error) {
-        console.error('Client: WebSocket Error ' + error);
-        log('An error occurred');
-        connected = false;
-    };
+    // reconnect, if necessary
+    if (ws === null || ws.readyState === ws.CLOSED) {
+        var address = document.getElementById('formAddress').value;
+        ws = new WebSocket(address);
+        ws.onopen = function () {
+            var tstamp = new Date().valueOf();
+            ws.send('Connect at ' + tstamp);
+            log('Connected');
+            connected = true;
+        };
+        
+        ws.onerror = function (error) {
+            console.error('Client: WebSocket Error ' + error);
+            log('An error occurred');
+            connected = false;
+        };
 
-    ws.onmessage = function (e) {
-        console.log('< {' + e.data + '}');
-        log('< Got ' + e.data);
-        parseMessage(e.data);
-        connected = true;
-    };
-}
+        ws.onmessage = function (e) {
+            console.log('< {' + e.data + '}');
+            log('< Got ' + e.data);
+            parseMessage(e.data);
+            connected = true;
+        };
+    }
 
-// Send current position at periodic interval
-if (wsTimer === null) {
-    wsTimer = setInterval(function() {
-        var tstamp = new Date().valueOf();
-        if (t0 === null) t0 = tstamp;
+    // Send current position at periodic interval
+    if (wsTimer === null) {
+        wsTimer = setInterval(function() {
+            var tstamp = new Date().valueOf();
+            if (t0 === null) t0 = tstamp;
 
-/* 			var msg = "{";
-        for (var i = 0; i < setPos.length; i++) {
-            msg += "'" + String.fromCharCode(i + "a".charCodeAt()) + "':" + setPos[i].toFixed(1) + ",";
-        }
-        msg += "'t':" +(tstamp - t0) + "}";
-*/			
-        var msg = "@"  + setPos.map(x => Math.round(100*x)).join(",") + ",t:" + (tstamp-t0);
+    /* 			var msg = "{";
+            for (var i = 0; i < setPos.length; i++) {
+                msg += "'" + String.fromCharCode(i + "a".charCodeAt()) + "':" + setPos[i].toFixed(1) + ",";
+            }
+            msg += "'t':" +(tstamp - t0) + "}";
+    */			
+            var msg = "@"  + setPos.map(x => Math.round(100*x)).join(",") + ",t:" + (tstamp-t0);
 
-         send(msg);
-    }, 1000);
-}
+            send(msg);
+        }, 1000);
+    }
 } // reconnect
 
 function send(data) {
-reconnect();
-if (ws.readyState === ws.OPEN) {
-    console.log('> ' + data);
-    log('> ' + data);
-    ws.send(data);
-} else {
-    log('No connexion. Attempting to reconnect... (> ' + data + ')');
-}
+    reconnect();
+    if (ws.readyState === ws.OPEN) {
+        console.log('> ' + data);
+        log('> ' + data);
+        ws.send(data);
+    } else {
+        log('No connexion. Attempting to reconnect... (> ' + data + ')');
+    }
 }
 
 function parseMessage(msg) {
-if (msg.charAt(0) == '#' || msg.charAt(0) == '@') {
-    msg = msg.slice(1); // remove first character
-    curPos = msg.split(',').slice(0,10).map(x => x * .01);
+    if (msg.charAt(0) == '#' || msg.charAt(0) == '@') {
+        msg = msg.slice(1); // remove first character
+        curPos = msg.split(',').slice(0,10).map(x => x * .01);
 
-    // Todo: generalize usage of DofIdX and DofIdY for indicator
-    navJoystick.indicator = {x: curPos[1], y: curPos[0]};
-    headJoystick.indicator = {x: curPos[2], y: curPos[3]};
-    leftArmJoystick.indicator = {x: curPos[5], y: curPos[4]};
-    rightArmJoystick.indicator = {x: curPos[8], y: curPos[7]};
-    headJoystick.draw();
-    leftArmJoystick.draw();
-    rightArmJoystick.draw();
+        // Todo: generalize usage of DofIdX and DofIdY for indicator
+        navJoystick.indicator = {x: curPos[1], y: curPos[0]};
+        headJoystick.indicator = {x: curPos[2], y: curPos[3]};
+        leftArmJoystick.indicator = {x: curPos[5], y: curPos[4]};
+        rightArmJoystick.indicator = {x: curPos[8], y: curPos[7]};
+        headJoystick.draw();
+        leftArmJoystick.draw();
+        rightArmJoystick.draw();
 
-    for (var i = 0; i < curPos.length; i++) {
-        var table = document.getElementById('dataTable');
-        if (i+1 < table.rows.length) {
-            table.rows[i+1].cells[3].innerHTML = curPos[i].toFixed(2); //map(curPos[i], -1.0, 1.0, -90.0, 90.0).toFixed(2);
-        } else {
-            console.log("Table length overflow! " + curPos.length);
+        for (var i = 0; i < curPos.length; i++) {
+            var table = document.getElementById('dataTable');
+            if (i+1 < table.rows.length) {
+                table.rows[i+1].cells[3].innerHTML = Math.round(curPos[i]*100); //map(curPos[i], -1.0, 1.0, -90.0, 90.0).toFixed(2);
+            } else {
+                console.log("Table length overflow! " + curPos.length);
+            }
         }
-    }
 
     } else {
         log("Wrong format '" + msg + "'");
