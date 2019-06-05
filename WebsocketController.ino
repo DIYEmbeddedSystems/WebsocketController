@@ -53,16 +53,32 @@ enum dof_id_e {
   L_HAND = 9, 
 };
 
+
+enum servo_pin_e {
+ R_SHOULDER_ELEVATION_P = 0,
+ R_SHOULDER_EXTENSION_P = 1,
+ R_HAND_P = 3,
+ H_PAN_P = 8,
+ H_TILT_P = 9,
+ L_HAND_P = 12,
+ L_SHOULDER_EXTENSION_P = 14,
+ L_SHOULDER_ELEVATION_P = 15
+};
+
 SlowServo servos[] = {
-// SlowServo(pinNum, maxDegreePerSecond, minDeg, maxDev, inverted)
-  SlowServo(8, 60), // Head pan
-  SlowServo(9, 60), // Head tilt
-  SlowServo(0, 15), // Right shoulder elevation
-  SlowServo(1, 15), // Right shoulder extension
-  SlowServo(3, 60), // Right hand
-  SlowServo(15, 15), // Left shoulder elevation
-  SlowServo(14, 15), // Left shoulder extension
-  SlowServo(12, 60), // Left hand
+// SlowServo(pinNum, maxDegreePerSecond, minDeg, maxDeg, inverted)
+  SlowServo(H_PAN_P, 60, -90, 90, 0), // Head pan
+  SlowServo(H_TILT_P, 60, -40, 40, 1), // Head tilt
+  SlowServo(R_SHOULDER_ELEVATION_P, 15, -90, 90, 0), // Right shoulder elevation
+  SlowServo(R_SHOULDER_EXTENSION_P, 15, -90, 90, 0), // Right shoulder extension
+  SlowServo(R_HAND_P, 60, -90, 90, 0), // Right hand
+  SlowServo(L_SHOULDER_ELEVATION_P, 15, -90, 90, 0), // Left shoulder elevation
+  SlowServo(L_SHOULDER_EXTENSION_P, 15, -90, 90, 0), // Left shoulder extension
+  SlowServo(L_HAND_P, 60, -90, 90, 0), // Left hand
+};
+
+const String mnemonics[] = {
+  "HP", "HT", "RS", "RA", "RH", "LS", "LA", "LH"
 };
 
 
@@ -128,7 +144,7 @@ void loop() {
   webSocketReport();
   controlLoop();
 
-  test();
+//  test();
 }
 
 void test() {
@@ -191,7 +207,6 @@ void parseCommand(uint8_t *payload, size_t len) {
   
   for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
     x = strtol(s, &s, 10);
-//    Serial.printf("[%d] := %d, ", i, x);
     servos[i].write(x);
     if (*s == ',') {
       ++s;
@@ -211,11 +226,13 @@ void report() {
 
     String s = "#";
     for (int i = 0; i < sizeof(servos) / sizeof(servos[0]); i++) {
+      s += mnemonics[i];
+      s += " ";
       s += servos[i].read();
-      s += " ("; 
-      s += servos[i]._curr_pulse; 
-      s += ")";
-      s += "\t";
+      s += "° \t";
+//      s += " ";
+//      s += servos[i].read_pulse();
+//      s += "p \t";
     }
     s += "t:";
     s += millis();
@@ -401,8 +418,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t len) {
       }
       break;
     case WStype_TEXT:                     // if new text data is received
-      Serial.printf("[%u] get Text: %s\n", num, payload);
-      hexdump((unsigned char *)payload, len);
+//      Serial.printf("[%u] get Text: %s\n", num, payload);
+//      hexdump((unsigned char *)payload, len);
       parseCommand(payload, len);
       break;
     default:

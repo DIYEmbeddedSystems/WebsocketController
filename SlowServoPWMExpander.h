@@ -10,6 +10,13 @@
  * as long as you keep this author & license header.
  * Happy hacking!
  * 
+ * 
+ * Operations (not ordered yet):
+ * translate degrees to pulses
+ * invert if required
+ * limit either degree to range min_deg ... max_deg, 
+ *       or pulse to range min_pulse ... max_pulse, where pulse min/max are adequately precomputed
+ * 
  */
 
 
@@ -59,23 +66,31 @@ public:
    * \param max_deg   soft limit for max position (in degrees)
    * \param inverted  whether input position shall be interpreted negative
    */
-  SlowServo(int num = 0, int16_t max_dps = MAX_DPS_DEFAULT, int16_t min_deg = -90, int16_t max_deg = 90, int8_t inverted = false) :
+  SlowServo(int num = 0, int16_t max_dps = MAX_DPS_DEFAULT, int16_t min_deg = -90, int16_t max_deg = 90, int8_t inverted = 0) :
     _num(num), 
     _max_dps(max_dps),
-    _min_pulse(deg2pulse(min_deg)),
-    _max_pulse(deg2pulse(max_deg)),
     _last_pulse(-1),
     _curr_pulse(MED_PULSE), 
     _start_pulse(MED_PULSE),
     _end_pulse(MED_PULSE),
     _inverted(inverted)
   {
+    _min_pulse = deg2pulse(min_deg);
+    _max_pulse = deg2pulse(max_deg);
+    
     // if necessary, initialize PWM expander IC
     if (!_pwm_started) {
       _pwm.begin();
       _pwm.setPWMFreq(50);
       _pwm_started = true;
+
+      if (!Serial) {
+        Serial.begin(115200); // required if I want to use Serial during object initialization
+      }
     }
+
+    Serial.printf("Servo controller initialized \n num %d, max_dps %d, min_p %d, max_p %d\n",
+        _num, _max_dps, _min_pulse, _max_pulse);
   }
 
   /** 
@@ -97,25 +112,15 @@ public:
     return pulse2deg(_max_pulse);
   }
 
-
-  /**
-   * Main API
-   */
-
-  /**
-   * @brief Set servo to move towards given position, at maximum allowed speed
-   * @param degree: servo set position
-   */
-  void write(int16_t degree) {
-    write_speed(degree, _max_dps);
-  }
-
  /**
    * @brief Set servo to move towards given position in given delay
    * @param degree: servo set position
    * @param delay_ms: how much time the servo should take to arrive at set pos
    */
   void write_delay(int16_t degree, long int delay_ms = 0) {
+    if (_inverted) {
+      degree = -degree;
+    }
     delay_ms = constrain(delay_ms, 0, 60000); // make sure delay is between 0 ms and < 1 minute
     write_pulse(deg2pulse(degree), delay_ms);
   }
@@ -125,7 +130,10 @@ public:
    * @param degree: servo set position
    * @param speed_dps: angular velocity in degree per second
    */
-  void write_speed(int16_t degree, int16_t speed_dps = MAX_DPS_DEFAULT) {
+  void write(int16_t degree, int16_t speed_dps = MAX_DPS_DEFAULT) {
+    if (_inverted) {
+      degree = -degree;
+    }
     degree = constrain(degree, SERVO_MIN, SERVO_MAX);
     speed_dps = constrain(speed_dps, 1, MAX_DPS_DEFAULT); /* arbitrary max 360°/s */
     int16_t pulse = deg2pulse(degree);
@@ -136,7 +144,7 @@ public:
 
   void write_pulse(int16_t pulse, long int delay_ms) {
     _start_pulse = _curr_pulse;
-    _end_pulse = constrain(pulse, MIN_PULSE, MAX_PULSE);
+    _end_pulse = constrain(pulse, _min_pulse, _max_pulse);
     _start_ms = millis();
     _end_ms = _start_ms + delay_ms;
   }
@@ -146,7 +154,10 @@ public:
   }
   
   int16_t read() {
-    return map(read_pulse(), MIN_PULSE, MAX_PULSE, SERVO_MIN, SERVO_MAX);
+    if (_inverted) {
+      return -pulse2deg(_curr_pulse);
+    }
+    return pulse2deg(_curr_pulse);
   }
 
   bool is_moving() {
@@ -167,12 +178,14 @@ public:
     // Send update to PWM Extender only when necessary
     if (_curr_pulse != _last_pulse) {
       int16_t offset = 0; //_num << 8; // each servo on PWM extender has a specific offset, so that high pulses are equally distributed in 20ms period
-      _pwm.setPWM(_num, offset, 0x0fff & (offset + _curr_pulse));
+      _pwm.setPWM(_num, offset, ((1 << 12) - 1) & (offset + _curr_pulse));
       _last_pulse = _curr_pulse;
     }
   }
 };
 
+
 // Initialization of static members
 bool SlowServo::_pwm_started = false;
+
 Adafruit_PWMServoDriver SlowServo::_pwm = Adafruit_PWMServoDriver();
