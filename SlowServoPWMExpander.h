@@ -6,16 +6,10 @@
  * @author Etienne Hamelin (etienne.hamelin@gmail.com ; www.github.com/etiennehamelin)
  * 
  * @licence 
- * You may freely use, compile, link, copy, adapt, distribute, this software,
+ * You may freely use, compile, link, copy, modify, or distribute this software,
  * as long as you keep this author & license header.
  * Happy hacking!
  * 
- * 
- * Operations (not ordered yet):
- * translate degrees to pulses
- * invert if required
- * limit either degree to range min_deg ... max_deg, 
- *       or pulse to range min_pulse ... max_pulse, where pulse min/max are adequately precomputed
  * 
  */
 
@@ -23,7 +17,7 @@
 #include <Wire.h>                     // I2C communication with PCA9685 I2C hardware PWM controller
 #include <Adafruit_PWMServoDriver.h>  // PCA9685 I2C hardware PWM controller driver
 
-// maximum allowed speed (degrees per second)
+// maximum allowed speed (600 degree per second)
 #define MAX_DPS_DEFAULT 600
 
 #ifdef SERVO_EXTENDED_RANGE
@@ -64,7 +58,7 @@ public:
    * \param max_dps   maximum allowed speed, in degree per second (dps)
    * \param min_deg   soft limit for min position (in degrees) 
    * \param max_deg   soft limit for max position (in degrees)
-   * \param inverted  whether input position shall be interpreted negative
+   * \param inverted  whether input position shall be interpreted negative:wq
    */
   SlowServo(int num = 0, int16_t max_dps = MAX_DPS_DEFAULT, int16_t min_deg = -90, int16_t max_deg = 90, int8_t inverted = 0) :
     _num(num), 

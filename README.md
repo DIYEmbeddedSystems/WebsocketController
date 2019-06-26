@@ -27,7 +27,6 @@ Moving parts are actuated by:
     + MG996R for higher torque (shoulders, head pan)
     + MG90S for smaller & light-torque joints
 
-
 ## Electronics
 The robot is composed of the following electronics modules:
 - power management
@@ -40,7 +39,6 @@ The robot is composed of the following electronics modules:
     + Wemos Motor shield, based on the TB6612FNG H-bridge controller (at default address 0x30)
         * drives 2 geared motors (CHIHAI, 6V DC, GM25-370)
 
-
     + PCA9685 16-channel PWM controller (at default address 0x40)
         * head pan (MG996R) and tilt (MG90S),
         * 2 arms x (shoulder elevation (MG996R), shoulder rotation (MG90S), hand open/close (MG90S))
@@ -49,19 +47,20 @@ The robot is composed of the following electronics modules:
 ### Code
 The ESP8266 runs the WebsocketControl.ino Arduino sketch. In brief, this sketch runs the following tasks in parallel (cooperative, run-to-completion scheduling):
 - connect to Wifi access point; if no AP found, open a new closed-network access point
-- accept and handle OTA update requests; 
-- upon HTTP request, serve webpage and other files from SPI flash;
-- accept incoming websocket connections; while a connection is up:
+- accept and handle OTA (over-the-air) firmware update requests; 
+- upon HTTP request, serve the webpage and other files from SPI flash file system;
+- accept incoming websocket connections; then while a connection is up:
     + periodically report current robot state (telemetry);
-    + whenever a telecommand is received, parse command message, update accordingly robot commanded state;
-- update control loops, and command actuators accordingly.
+    + whenever a telecommand is received, parse command message, and update accordingly the robot commanded state;
+- update actuator control loops, and command actuators accordingly.
 
 #### SlowServo library
-Fast servo movements at certain joints may cause a large torque which would certainly damage the somehow weak gears & motors. Moreover, if collision avoidance or range limits are not well implemented (especially during the debugging phase), collisions may occur and cause similar damage. For this reason, I have implemented a SlowServo library: a library for controlling a servo via a classic PWM interface, but with additional open-loop control that limits its range of motion and angular speed.
+Fast servo movements at certain joints may cause a large torque which would certainly damage the somehow weak gears & motors. Moreover, if collision avoidance or range limits are not well implemented (which is likely during the debugging phase), collisions may occur and cause mechanical damage. Moreover, high speed/high torque movements cause current surges, and may cause brown-outs or battery current limit protections.
+For these reasons, I have implemented a "slow servo" library: a library for controlling a servo via a classic PWM interface, but with additional open-loop control that limits its range of motion and angular speed.
 
 ### Data 
 The SPI flash on the Wemos board stores the (compiled) Arduino sketch, as well as several data files (version controlled in the data/ folder).
-
+Larger files are compressed with gz, in order to spare both flash space (currently nearly 1MB is used) and UI load time. Your browser transparently unzips the files for you.
 Use the ESP8266FS tool (https://www.instructables.com/id/Using-ESP8266-SPIFFS/) to upload these files to the Wemos' SPI flash.
 
 Content of these files is detailed in the next chapter.
@@ -101,8 +100,3 @@ TBD
 ## Payload structure
 TBD
 
-# To-do list
-
-- validate Websocket interaction between remote & robot
-- add motor shield control
-- let the children play
