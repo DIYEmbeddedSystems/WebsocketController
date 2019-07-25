@@ -2,23 +2,25 @@
 
 This repo contains both the source code for a Wall-E inspired robot, and the web browser-based remote controller for the robot. Communication between the robot and the remote is based on the Websocket protocol.
 
+A build log and more documentation about the project is available at [Hackaday.io](https://hackaday.io/project/165989-wall-e).
+
 # The Robot
 The robot is inspired from Pixar's *Wall-E* robot. The purpose of this project is to mimic as many of Wall-E's movements, controlled remotely via a ligthweight smartphone-based remote.
 
 ## Mechanics
 
 ### Body
-The robot body is a box made of hand sawn 5mm plywood.
+A first version of the robot body was made of hand sawn 5mm plywood.
+A second version was laser cut in 5mm plywood.
 
 ### Tracks
 The tracks are from a cheap kit from Geekcreit brand, named "Plastic Track + Driving Wheel + Bearing Wheel Set Accessory For Robot Car Chassis - G".
 
 ### Head & neck
-The head is made from a glued stack of 10mm plywood, routed on my homebrew CNC machine.
-Head/body articulation is made of 2 servos and a 10mm plywood neck.
+The first head was made from a glued stack of 10mm plywood, routed on my homebrew CNC machine ; second revision made of laser cut 5mm plywood.
 
 ### Arms
-Shoulders, arms, wrists and hands are assembled from hand sawn 2mm-thick aluminium board, 25x25mm aluminium square profile, 20mm-diamater wood stick, and 5mm-thick *Dibond*-style aluminium/plastic composite board.
+Shoulders, arms, wrists and hands are assembled from hand sawn 2mm-thick aluminium board, 25x25mm aluminium square profile, 20mm-diameter aluminium tube, 18mm-diameter wood stick, and the hand is made of 5mm *Dibond*-style aluminium/plastic composite board.
 
 ### Electro-mechanical actuators
 Moving parts are actuated by:
@@ -42,6 +44,7 @@ The robot is composed of the following electronics modules:
     + PCA9685 16-channel PWM controller (at default address 0x40)
         * head pan (MG996R) and tilt (MG90S),
         * 2 arms x (shoulder elevation (MG996R), shoulder rotation (MG90S), hand open/close (MG90S))
+ - front camera controller: a ESP32-CAM module
 
 ## Software
 ### Code
@@ -66,7 +69,6 @@ Use the ESP8266FS tool (https://www.instructables.com/id/Using-ESP8266-SPIFFS/) 
 Content of these files is detailed in the next chapter.
 
 # UI
-
 The user interface runs on a smartphone, tablet, or PC, in a browser. This is why it is developed in HTML / Javascript.
 
 The UI is designed as a single web page, featuring:
@@ -74,29 +76,14 @@ The UI is designed as a single web page, featuring:
 - joysticks
 
 # Interactions & protocol
-TBD
-
-@startuml
-
-User -> UI: touch joystick
-UI -> UI: convert touch screen position
-UI -> User: show joystick position
-UI -> Robot: send joints set positions
-Robot -> Robot: convert set position to actuator range
-Robot -> Robot: interpolate 
-Robot -> UI: send list of current positions
-UI -> UI: update indicators accordingly
-UI -> User: show indicators
-
-@enduml
+...To be continued...
 
 ![UML interaction diagram](https://www.plantuml.com/plantuml/img/PP1D4i8m24RtEGKNy09TEDrswqmF40csqHewG7HwUrF7_gXBXiVxW5hDY-Nxu5oh970uGjjKO9onXojFQX5lhcsM1d9waDW7K1IY12DhjCXfuOge0ktvkHf-aHEVsGf3AS0GrO0lfR0LK_ScTkWIlAVA5k0ncpSM49ywsiRcPR_qc4KexIEsg_8Ol17452BECYrQP0anTSFqVzN6ELUNZFA-5m00)
-
-Plantuml diagram generated with https://www.planttext.com/
+(diagram generated with https://www.planttext.com/)
 
 ## Message sequence
-TBD
+...To be continued...
 
-## Payload structure
-TBD
+## Message payload structure
+...To be continued...
 
