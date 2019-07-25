@@ -6,10 +6,7 @@
  * @author Etienne Hamelin (etienne.hamelin@gmail.com ; www.github.com/etiennehamelin)
  * 
  * @licence 
- * You may freely use, compile, link, copy, adapt, distribute, this software,
- * as long as you keep this author & license header.
- * Happy hacking!
- * 
+ * MIT License. see https://choosealicense.com/licenses/mit/
  */
 
 
@@ -271,7 +268,6 @@ void startWiFi() { // Start a Wi-Fi access point, and try to connect to some giv
   Serial.println("\" started\r\n");
 
   wifiMulti.addAP(AP_SSID, AP_PASSWORD);   // add Wi-Fi networks you want to connect to
-  wifiMulti.addAP("Samuel Barber", "litu7816");   // add Wi-Fi networks you want to connect to
 
   Serial.println("Connecting");
   while (wifiMulti.run() != WL_CONNECTED && WiFi.softAPgetStationNum() < 1) {  // Wait for the Wi-Fi to connect
